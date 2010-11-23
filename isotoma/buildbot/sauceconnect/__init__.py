@@ -206,6 +206,7 @@ class StopSauceTunnel(LoggingBuildStep):
     description = "stop-sauce-tunnel"
     flunkOnFailure = True
     haltOnFailure = True
+    alwaysRun = True
 
     pidfile = "sauce_tunnel.pid"
 
