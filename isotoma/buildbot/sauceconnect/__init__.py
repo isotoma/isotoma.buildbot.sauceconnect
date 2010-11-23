@@ -113,7 +113,7 @@ class StartSauceTunnel(LoggingBuildStep):
         self.cmd = cmd
 
         # Monitor stdio
-        self.stdio_log = stdio_log = self.addLog("stdio")
+        self.stdio_log = stdio_log = self.addLog(cmdname)
         cmd.useLog(stdio_log, True)
 
         # Setup other logs files
@@ -154,7 +154,7 @@ class StartSauceTunnel(LoggingBuildStep):
         cmd = RemoteShellCommand(".", "/bin/pwd")
         d = self.startCommand("pwd", cmd)
         def _get_stdio(res):
-            self.full_workdir_path = cmd.logs['stdio'].getText().strip()
+            self.full_workdir_path = cmd.logs['pwd'].getText().strip()
             return res
         d.addCallback(_get_stdio)
         return d
