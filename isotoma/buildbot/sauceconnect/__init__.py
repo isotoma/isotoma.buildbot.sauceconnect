@@ -66,7 +66,7 @@ class StartSauceTunnel(LoggingBuildStep):
             ports=ports,
             )
 
-        # Load all the sauce_tunnel commands into a dict
+        # Load all the sauce_connect commands into a dict
         # We'll run this through properties.render() when they are needed
         self._sauce_args = a = {}
         a['u'] = username
@@ -90,14 +90,14 @@ class StartSauceTunnel(LoggingBuildStep):
             raise BuildSlaveTooOldError(m)
 
         # Download support files to slave
-        d = self._push_sauce_tunnel()
-        d.addCallback(self._push_sauce_tunnel_check)
+        d = self._push_sauce_connect()
+        d.addCallback(self._push_sauce_connect_check)
 
         # Get the directory we are running in (start-stop-daemon expects a full path)
         d.addCallback(self._pwd)
 
         # Start a tunnel
-        d.addCallback(self._start_sauce_tunnel)
+        d.addCallback(self._start_sauce_connect)
 
         # If there was no fail, wait for it to come up
         def _proceed(res):
@@ -117,7 +117,7 @@ class StartSauceTunnel(LoggingBuildStep):
         cmd.useLog(stdio_log, True)
 
         # Setup other logs files
-        self.setupLogfiles(cmd, {"sauce_tunnel.log": "sauce_tunnel.log"})
+        self.setupLogfiles(cmd, {"sauce_connect.log": "sauce_connect.log"})
 
         d = self.runCommand(cmd) # might raise ConnectionLost
 
@@ -144,10 +144,10 @@ class StartSauceTunnel(LoggingBuildStep):
         d = self.runCommand(cmd)
         return d
 
-    def _push_sauce_tunnel(self):
-        return self._transfer_file(sibpath("sauce_tunnel"), 0755)
+    def _push_sauce_connect(self):
+        return self._transfer_file(sibpath("sauce_connect"), 0755)
 
-    def _push_sauce_tunnel_check(self, result):
+    def _push_sauce_connect_check(self, result):
         return self._transfer_file(sibpath("check.py"), 0755)
 
     def _pwd(self, res):
@@ -159,15 +159,15 @@ class StartSauceTunnel(LoggingBuildStep):
         d.addCallback(_get_stdio)
         return d
 
-    def _start_sauce_tunnel(self, result):
-        """ use start-stop-daemon to start sauce_tunnel """
+    def _start_sauce_connect(self, result):
+        """ use start-stop-daemon to start sauce_connect """
 
-        # start-stop-daemon until sauce_tunnel can self-background
+        # start-stop-daemon until sauce_connect can self-background
         command = ["/sbin/start-stop-daemon", "--background", "--make-pidfile", "--start", "--quiet",
-                   "--pidfile", "sauce_tunnel.pid", "--exec", "%s/sauce_tunnel" % self.full_workdir_path, "--"]
+                   "--pidfile", "sauce_connect.pid", "--exec", "%s/sauce_connect" % self.full_workdir_path, "--"]
 
-        # Maybe one day sauce_tunnel will self daemonize
-        # command = ["./sauce_tunnel"]
+        # Maybe one day sauce_connect will self daemonize
+        # command = ["./sauce_connect"]
 
         # 'render' the properties and assemble the shell command
         properties = self.build.getProperties()
@@ -180,11 +180,11 @@ class StartSauceTunnel(LoggingBuildStep):
                 command.extend([keyname, properties.render(val)])
 
         # Set path to ready-file
-        self.logfile = os.path.join(self.full_workdir_path, "sauce_tunnel.log")
+        self.logfile = os.path.join(self.full_workdir_path, "sauce_connect.log")
         command.extend(["--logfile", self.logfile])
 
         # Set path to log file
-        self.readyfile = os.path.join(self.full_workdir_path, "sauce_tunnel.ready")
+        self.readyfile = os.path.join(self.full_workdir_path, "sauce_connect.ready")
         command.extend(["--readyfile", self.readyfile])
 
         cmd = RemoteShellCommand(".", command)
@@ -208,7 +208,7 @@ class StopSauceTunnel(LoggingBuildStep):
     haltOnFailure = True
     alwaysRun = True
 
-    pidfile = "sauce_tunnel.pid"
+    pidfile = "sauce_connect.pid"
 
     def start(self):
         command = ["/sbin/start-stop-daemon", "--stop", "--retry", "QUIT/10/QUIT/10/QUIT/10/KILL/10", "--pidfile", self.pidfile]
